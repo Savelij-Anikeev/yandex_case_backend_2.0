@@ -123,18 +123,18 @@ class UserEventRelViewSet(viewsets.ModelViewSet):
 
         curr_user = self.request.user
         curr_event = get_object_or_404(Event, id=self.request.data['event'])
-        serializer.validated_data['user'] = curr_user
-        serializer.validated_data['event'] = curr_event
 
         # checking if relation exists
-        if len(UserEventRel.objects.filter(event=curr_event, user=curr_user)) != 0:
-            return self.perform_update(serializer)
-        serializer.save()
+        if len(UserEventRel.objects.filter(event=curr_event, user=curr_user)) == 0:
+            # adding required data to serializer
+            serializer.validated_data['user'] = curr_user
+            serializer.validated_data['event'] = curr_event
+            serializer.save()
 
-        # counting free places
-        qs = Event.objects.filter(id=curr_event.id)
-        if qs[0].is_place_limited:
-            qs.update(free_places=F('free_places')-1)
+            # counting free places
+            qs = Event.objects.filter(id=curr_event.id)
+            if qs[0].is_place_limited:
+                qs.update(free_places=F('free_places')-1)
 
     def perform_destroy(self, instance):
         """
